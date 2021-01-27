@@ -7,7 +7,7 @@ import requests
 # print(response.json())
 # proxy_list = []
 def proxylist():
-    url = "http://proxy.link/list/get/f0560a60eb15710ba7bf875771e82090?geo=true"
+    url = "http://proxy.link/list/get/0b6df8a6df41e9f482e9d6c30f9e1c6f?geo=true"
     response = requests.get(url)
     proxy_list = (response.text.split('\n'))
     # print(proxy_list)

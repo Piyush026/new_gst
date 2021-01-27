@@ -1,8 +1,10 @@
 import datetime
+from csvRead import tuples
 import json
 import os
 import re
 import sys
+import threading
 import time
 from datetime import date
 from selenium import webdriver
@@ -28,12 +30,15 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 import save_db
 from filingTable import filing_table
 from profile_file import profile_list
-from test import CaptchaSolver
-import read_excel
+from test import Captcha
+# import read_excel
 import random
 from hhub import proxylist
 
-lst = read_excel.lst
+threadLocal = threading.local()
+
+
+# lst = read_excel.lst
 
 
 # pproxy = "5.61.58.211:4114:RU"
@@ -52,32 +57,35 @@ class Runner:
         # prox.socks_proxy = pproxy
         prox.ssl_proxy = pproxy
         print(pproxy)
-        capabilities = webdriver.DesiredCapabilities.CHROME
-        prox.add_to_capabilities(capabilities)
+        self.driver = getattr(threadLocal, 'driver', None)
+        if self.driver is None:
+            capabilities = webdriver.DesiredCapabilities.CHROME
+            prox.add_to_capabilities(capabilities)
 
-        options = get_web_driver_options()
-        # set_proxy(options)
-        set_ignore_certificate_error(options)
+            options = get_web_driver_options()
+            # set_proxy(options)
+            set_ignore_certificate_error(options)
 
-        set_browser_as_incognito(options)
-        # set_automation_as_head_less(options)
-        set_browser_in_fullScreen(options)
+            set_browser_as_incognito(options)
+            set_automation_as_head_less(options)
+            # set_browser_in_fullScreen(options)
 
-        self.driver = get_chrome_web_driver(options, capabilities)
+            self.driver = get_chrome_web_driver(options, capabilities)
+        setattr(threadLocal, 'driver', self.driver)
         self.dictt = {}
 
-    def know_your_gst(self, cname):
-        self.driver.get(self.base_url)
-        self.driver.implicitly_wait(5)
-        time.sleep(1)
-        self.driver.find_element_by_id("gstnumber").send_keys(cname + Keys.ENTER)
-
-        # self.driver.find_element_by_xpath('/html/body/div[1]/div[2]/div[1]/div[1]/form/div[2]/input').click()
-        # time.sleep(2)
-        gst = self.driver.find_element_by_xpath('//*[@id="searchresult"]/span/strong[2]').text
-        pan = gst[2:-3]
-        print(pan)
-        return pan
+    # def know_your_gst(self, cname):
+    #     self.driver.get(self.base_url)
+    #     self.driver.implicitly_wait(5)
+    #     time.sleep(1)
+    #     self.driver.find_element_by_id("gstnumber").send_keys(cname + Keys.ENTER)
+    #
+    #     # self.driver.find_element_by_xpath('/html/body/div[1]/div[2]/div[1]/div[1]/form/div[2]/input').click()
+    #     # time.sleep(2)
+    #     gst = self.driver.find_element_by_xpath('//*[@id="searchresult"]/span/strong[2]').text
+    #     pan = gst[2:-3]
+    #     print(pan)
+    #     return pan
 
     def gst(self, pan):
         try:
@@ -89,6 +97,8 @@ class Runner:
             try:
                 self.captcha()
             except TypeError:
+                self.captcha()
+            except IndexError:
                 self.captcha()
             data = WebDriverWait(self.driver, 2).until(
                 EC.presence_of_element_located(
@@ -105,10 +115,10 @@ class Runner:
         time.sleep(2)
         data = self.driver.find_element_by_xpath('//*[@id="imgCaptcha"]')
         data.screenshot("foo.png")
-        obj = CaptchaSolver()
-        captcha_answ = obj.recaptcha()
+        obj = Captcha()
+        captcha_answ = obj.solve()
         while len(captcha_answ) < 1:
-            captcha_answ = obj.recaptcha()
+            captcha_answ = obj.solve()
         time.sleep(1)
         # self.driver.execute_script(f"document.getElementById('fo-captcha').value={captcha_answ}")
         self.driver.find_element_by_id('fo-captcha').send_keys(captcha_answ, Keys.ENTER)
@@ -143,6 +153,7 @@ class Runner:
             return lst
 
     def all_gst(self, all_rows):
+        time.sleep(.5)
         page = self.driver.page_source
         soup = BeautifulSoup(page, "html.parser")
         data = soup.find_all("div", {"class": "table-responsive"})
@@ -170,19 +181,27 @@ class Runner:
                 jsn = json.loads(bzgddtls)
                 self.driver.get("https://services.gst.gov.in/services/searchtp")
                 self.driver.find_element_by_id("for_gstin").send_keys(gstin)
+                time.sleep(.3)
+                # element = self.driver.find_element_by_xpath('//*[@id="filingTable"]')
+                # self.driver.execute_script("arguments[0].scrollIntoView();", element)
+
                 try:
                     self.captcha()
-                    time.sleep(1)
+                    time.sleep(.5)
                     self.driver.find_element_by_id('filingTable').click()
                 except NoSuchElementException:
                     self.captcha()
-                    time.sleep(1)
+                    time.sleep(.5)
                     self.driver.find_element_by_id('filingTable').click()
-                tbl, pf_list = self.extract_data()
-                inr_dict['profile'] = pf_list
-                inr_dict['gst'] = tbl
-                inr_dict['description'] = jsn
-                inr_dict['Pan'] = gstin[2:-3]
+                except IndexError:
+                    self.captcha()
+                    time.sleep(.5)
+                    self.driver.find_element_by_id('filingTable').click()
+                tbl, pf_list = self.extract_data(gstin[2:-3])
+                inr_dict['CompanyDetails'] = pf_list
+                inr_dict['gstFiling'] = tbl
+                inr_dict['goodsAndServices'] = jsn
+                # inr_dict['Pan'] = gstin[2:-3]
                 inr_dict['Created_at'] = str(date.today())
                 outr[gstin] = inr_dict
             except Exception as e:
@@ -195,7 +214,7 @@ class Runner:
         # print(self.dictt)
         return self.dictt
 
-    def extract_data(self):
+    def extract_data(self, pan):
         time.sleep(1)
         page = self.driver.page_source
         soup = BeautifulSoup(page, "html.parser")
@@ -205,7 +224,7 @@ class Runner:
         data = divs.find_all("div", {"class": "row"})
         line1 = data[0].text.split("\n")
         line2 = data[2].text.split("\n")
-        pf_list = profile_list(line1, line2)
+        pf_list = profile_list(line1, line2, pan)
         return tbl, pf_list
 
     def close_driver(self):
@@ -213,48 +232,54 @@ class Runner:
 
 
 def main(lstt):
-    for x in lstt:
-        proxy_list = proxylist()
-        pproxy = random.choice(proxy_list)
-        run_obj = Runner(URL, pproxy)
-        cname = {}
-        try:
-            pan = run_obj.know_your_gst(x)
-            data = run_obj.gst(pan)
-            cnt = 0
-            if data:
-                while cnt < 2:
-                    run_obj.gst(pan)
-                    cnt += 1
-            else:
-                num = run_obj.ectract_gst_number()
-                print("lst", num)
-                print("len", len(num))
+    # for x in lstt:
+    proxy_list = proxylist()
+    pproxy = random.choice(proxy_list)
+    run_obj = Runner(URL, pproxy)
+    cname = {}
+    try:
+        # pan = run_obj.know_your_gst(x[1][2:-3])
+        # print("pan", pan)
+        data = run_obj.gst(lstt[1][2:-3])
+        cnt = 0
+        if data:
+            while cnt < 2:
+                run_obj.gst(lstt[1][2:-3])
+                cnt += 1
+        else:
 
-                res = run_obj.open_gst_number(num)
-                # print(res)
-                cname[x] = res
-                # for i in num:
-                #     if i not in cname[x].keys():
-                #         res = run_obj.open_gst_number(num)
-                #         cname[x] = res
-                # print(cname)
-                # import save_db
-                # save_db.insertData(cname)
+            num = run_obj.ectract_gst_number()
+            print("lst", num)
+            print("len", len(num))
 
-        except Exception as e:
-            print(str(e))
-            continue
-        finally:
-            pass
-            print(cname)
+            res = run_obj.open_gst_number(num)
+            # print(res)
+            cname[lstt[0]] = res
+            # print("cname[x]",cname[x[0]])
+            # for i in num:
+            #     if i not in cname[x].keys():
+            #         res = run_obj.open_gst_number(num)
+            #         cname[x] = res
+            # print(cname)
+            # import save_db
+            # save_db.insertData(cname)
+
+    except Exception as e:
+        print(str(e))
+        run_obj.close_driver()
+        # continue
+    finally:
+        # print(cname)
+        if cname[lstt[0]]:
             # print(type(cname))
             save_db.insertData(cname)
-            run_obj.close_driver()
-            # print(cname)
-            # with open("data_file.json", "w") as write_file:
-            #     json.dump(cname, write_file)
+
+        # run_obj.close_driver()
+        # print(cname)
+        # with open("data_file.json", "w") as write_file:
+        #     json.dump(cname, write_file)
 
 
 if __name__ == '__main__':
-    main()
+    lst = tuples[:20]
+    main(lst)

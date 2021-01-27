@@ -25,7 +25,7 @@ fi = ['', '', '', 'Administrative Office', '', '', '                            
 """
 
 
-def profile_list(ci, fi):
+def profile_list(ci, fi, pan):
     address_list = [i.strip() for i in fi if i]
     ad_office = address_list.index('Administrative Office')
     other_office = address_list.index('Other Office')
@@ -40,5 +40,7 @@ def profile_list(ci, fi):
                'date': " ".join(name_list[date + 1:]),
                "Administrative Office": " ".join(address_list[ad_office + 1:other_office]),
                "Other Office": " ".join(address_list[other_office + 1:principal_place]),
-               "Principal Place of Business": " ".join(address_list[principal_place + 1:])}
+               "Principal Place of Business": " ".join(address_list[principal_place + 1:]),
+               "pan": pan
+               }
     return profile
