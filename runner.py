@@ -96,6 +96,8 @@ class Runner:
             # img()
             try:
                 self.captcha()
+            except NoSuchElementException:
+                self.captcha()
             except TypeError:
                 self.captcha()
             except IndexError:
@@ -103,6 +105,9 @@ class Runner:
             data = WebDriverWait(self.driver, 2).until(
                 EC.presence_of_element_located(
                     (By.XPATH, "//span[contains(text(),'Enter valid letters shown in the image below')]")))
+
+            while data:
+                self.captcha()
             if data:
                 return True
         except Exception as e:
@@ -113,13 +118,19 @@ class Runner:
 
     def captcha(self):
         time.sleep(2)
-        data = self.driver.find_element_by_xpath('//*[@id="imgCaptcha"]')
+        data = WebDriverWait(self.driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="imgCaptcha"]')))
+
+        # self.driver.find_element_by_xpath('//*[@id="imgCaptcha"]')
         data.screenshot("foo.png")
         obj = Captcha()
         captcha_answ = obj.solve()
         while len(captcha_answ) < 1:
             captcha_answ = obj.solve()
         time.sleep(1)
+        # if not captcha_answ:
+        #     captcha_answ = obj.solve()
         # self.driver.execute_script(f"document.getElementById('fo-captcha').value={captcha_answ}")
         self.driver.find_element_by_id('fo-captcha').send_keys(captcha_answ, Keys.ENTER)
 
@@ -191,8 +202,10 @@ class Runner:
                     self.driver.find_element_by_id('filingTable').click()
                 except NoSuchElementException:
                     self.captcha()
-                    time.sleep(.5)
-                    self.driver.find_element_by_id('filingTable').click()
+                    data = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, '//*[@id="filingTable"]')))
+                    data.click()
                 except IndexError:
                     self.captcha()
                     time.sleep(.5)
