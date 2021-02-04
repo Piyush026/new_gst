@@ -4,31 +4,34 @@ import urllib.parse
 # username = urllib.parse.quote_plus('jack')
 # password = urllib.parse.quote_plus("Mongo@123")
 
-url = "mongodb+srv://polo:" + urllib.parse.quote(
-    "gvhjgv3456nb") + "@cluster0.b8rq1.mongodb.net/test?retryWrites=true&w=majority"
-# url is just an example (your url will be different)
+#url = "mongodb+srv://polo:" + urllib.parse.quote(
+ #   "gvhjgv3456nb") + "@cluster0.b8rq1.mongodb.net/test?retryWrites=true&w=majority"
+url = 'mongodb://localhost:27017'
 
 cluster = MongoClient(url)
-db = cluster['scraper10']
-collection = db['gst']
-
+db = cluster['scraper']
+collection = db['company_16l']
+#mydict = {"name":"Piyush"}
+#x = collection.insert_one(mydict)
+#print(x)
 # print(db)
 lsttt = ["ASHIRVAD PIPES PRIVATE LIMITED ", "ASCO NUMATICS (INDIA) PRIVATE LIMITED ", "sdjzhcb",
          "ARMAN FINANCIAL SERVICES LIMITED"]
 
-orr = "mongodb+srv://polo:" + urllib.parse.quote(
-    "gvhjgv3456nb") + "@cluster0.b8rq1.mongodb.net/scraper3"
-uh = MongoClient(orr)
-print(uh)
+
 def searchData():
-    result = collection.find({})
+    result = collection.find()
+    print("start")
+    print(result)
     for document in result:
-        ioi = list(document.keys())[1]
-        if ioi in lsttt:
-            lsttt.remove(ioi)
+       print(document)
+       # ioi = list(document.keys())[1]
+        #print(ioi)
+        #if ioi in lsttt:
+         #   lsttt.remove(ioi)
 
 
-# searchData()
+#searchData()
 
 # print(lsttt)
 
@@ -40,7 +43,9 @@ def insertData(pst1):
     except Exception as e:
         print(e)
 
+    
 # from datetime import date
 #
 # today = date.today()
 # print("Today's date:", today)
+

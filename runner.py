@@ -57,21 +57,21 @@ class Runner:
         # prox.socks_proxy = pproxy
         prox.ssl_proxy = pproxy
         print(pproxy)
-        self.driver = getattr(threadLocal, 'driver', None)
-        if self.driver is None:
-            capabilities = webdriver.DesiredCapabilities.CHROME
-            prox.add_to_capabilities(capabilities)
+       # self.driver = getattr(threadLocal, 'driver', None)
+        #if self.driver is None:
+        capabilities = webdriver.DesiredCapabilities.CHROME
+        prox.add_to_capabilities(capabilities)
 
-            options = get_web_driver_options()
-            # set_proxy(options)
-            set_ignore_certificate_error(options)
+        options = get_web_driver_options()
+        # set_proxy(options)
+        set_ignore_certificate_error(options)
 
-            set_browser_as_incognito(options)
-            set_automation_as_head_less(options)
-            # set_browser_in_fullScreen(options)
+        set_browser_as_incognito(options)
+        #set_automation_as_head_less(options)
+        set_browser_in_fullScreen(options)
 
-            self.driver = get_chrome_web_driver(options, capabilities)
-        setattr(threadLocal, 'driver', self.driver)
+        self.driver = get_chrome_web_driver(options, capabilities)
+        #setattr(threadLocal, 'driver', self.driver)
         self.dictt = {}
 
     # def know_your_gst(self, cname):
@@ -245,54 +245,54 @@ class Runner:
 
 
 def main(lstt):
-    # for x in lstt:
-    proxy_list = proxylist()
-    pproxy = random.choice(proxy_list)
-    run_obj = Runner(URL, pproxy)
-    cname = {}
-    try:
-        # pan = run_obj.know_your_gst(x[1][2:-3])
-        # print("pan", pan)
-        data = run_obj.gst(lstt[1][2:-3])
-        cnt = 0
-        if data:
-            while cnt < 2:
-                run_obj.gst(lstt[1][2:-3])
-                cnt += 1
-        else:
+    for x in lstt:
+        proxy_list = proxylist()
+        pproxy = random.choice(proxy_list)
+        run_obj = Runner(URL, pproxy)
+        cname = {}
+        try:
+            # pan = run_obj.know_your_gst(x[1][2:-3])
+            # print("pan", pan)
+            data = run_obj.gst(x[1][2:-3])
+            cnt = 0
+            if data:
+                while cnt < 2:
+                    run_obj.gst(x[1][2:-3])
+                    cnt += 1
+            else:
 
-            num = run_obj.ectract_gst_number()
-            print("lst", num)
-            print("len", len(num))
+                num = run_obj.ectract_gst_number()
+                print("lst", num)
+                print("len", len(num))
 
-            res = run_obj.open_gst_number(num)
-            # print(res)
-            cname[lstt[0]] = res
-            # print("cname[x]",cname[x[0]])
-            # for i in num:
-            #     if i not in cname[x].keys():
-            #         res = run_obj.open_gst_number(num)
-            #         cname[x] = res
+                res = run_obj.open_gst_number(num)
+                # print(res)
+                cname[x[0]] = res
+                # print("cname[x]",cname[x[0]])
+                # for i in num:
+                #     if i not in cname[x].keys():
+                #         res = run_obj.open_gst_number(num)
+                #         cname[x] = res
+                # print(cname)
+                # import save_db
+                # save_db.insertData(cname)
+
+        except Exception as e:
+            print(str(e))
+            run_obj.close_driver()
+            continue
+        finally:
             # print(cname)
-            # import save_db
-            # save_db.insertData(cname)
-
-    except Exception as e:
-        print(str(e))
-        run_obj.close_driver()
-        # continue
-    finally:
-        # print(cname)
-        if cname[lstt[0]]:
-            # print(type(cname))
-            save_db.insertData(cname)
-
-        # run_obj.close_driver()
-        # print(cname)
-        # with open("data_file.json", "w") as write_file:
-        #     json.dump(cname, write_file)
+            if cname[x[0]]:
+                # print(type(cname))
+                save_db.insertData(cname)
+            run_obj.close_driver()
+            continue
+            # print(cname)
+            # with open("data_file.json", "w") as write_file:
+            #     json.dump(cname, write_file)
 
 
 if __name__ == '__main__':
-    lst = tuples[:20]
+    lst = tuples[2142:]
     main(lst)

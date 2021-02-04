@@ -1,7 +1,7 @@
 import pandas
 
-file = "/home/ezeia/PycharmProjects/geekforgeeks/csv/ghh.csv"
-df = pandas.read_csv(file, usecols=['CIN_Number', 'pan'])
+file = r"ghh.csv"
+df = pandas.read_csv(file, usecols=['CIN_Number', 'gst'])
 sd = df.values
 tuples = [tuple(x) for x in df.values]
 print(tuples)
